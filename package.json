@@ -1,0 +1,19 @@
+{
+  "name": "twake-search",
+  "version": "0.1.0",
+  "description": "Unified search service for Twake Workplace — indexes Chat, Mail, Drive, and LinShare",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": ["twake", "linagora", "search", "jmap", "matrix", "cozy"],
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "fastify": "^5.0.0",
+    "mammoth": "^1.8.0",
+    "pdf-parse": "^1.1.1"
+  }
+}
