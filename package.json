@@ -10,6 +10,7 @@
     "test": "node --test 'test/**/*.test.js'"
   },
   "keywords": ["twake", "linagora", "search", "jmap", "matrix", "cozy"],
+  "author": "Jacob <jacob@twake.app>",
   "license": "AGPL-3.0",
   "dependencies": {
     "better-sqlite3": "^11.0.0",
