@@ -11,6 +11,7 @@
  *
  * Usage:
  *   npm start                         Start with default config
+ *   npm start -- --demo               Start with sample data (no credentials needed)
  *   TWAKE_CONFIG=path node server.js  Start with custom config path
  *
  * Configuration is loaded from twake-cli's config file by default,
@@ -27,11 +28,13 @@ import { ChatConnector } from './connectors/chat-connector.js';
 import { MailConnector } from './connectors/mail-connector.js';
 import { DriveConnector } from './connectors/drive-connector.js';
 import { registerRoutes } from './api/routes.js';
+import { seedDemoData } from './demo/seed.js';
 
 // --- Configuration ---
 
 const PORT = parseInt(process.env.TWAKE_SEARCH_PORT || '3200');
 const HOST = process.env.TWAKE_SEARCH_HOST || '127.0.0.1';
+const DEMO_MODE = process.argv.includes('--demo');
 
 /**
  * Load config from twake-cli's config file.
@@ -60,6 +63,42 @@ function loadConfig() {
 // --- Server Setup ---
 
 async function main() {
+  // --- Demo mode: seed sample data, skip real connectors ---
+  if (DEMO_MODE) {
+    console.log('[demo] Starting in demo mode — no credentials required');
+
+    const dbDir = join(homedir(), '.twake-search');
+    const dbPath = join(dbDir, 'demo.db');
+
+    console.log(`[engine] Database: ${dbPath}`);
+    const engine = new SearchEngine(dbPath);
+
+    seedDemoData(engine);
+
+    const fastify = Fastify({ logger: { level: 'info' } });
+    registerRoutes(fastify, { engine, connectors: {} });
+
+    await fastify.listen({ port: PORT, host: HOST });
+    console.log(`\n[demo] twake-search running at http://${HOST}:${PORT}`);
+    console.log(`[demo] Try these queries:`);
+    console.log(`[demo]   curl http://${HOST}:${PORT}/search?q=project`);
+    console.log(`[demo]   curl http://${HOST}:${PORT}/search?q=deployment+pipeline`);
+    console.log(`[demo]   curl http://${HOST}:${PORT}/search?q=budget&sources=drive`);
+    console.log(`[demo]   curl http://${HOST}:${PORT}/search/stats`);
+
+    const shutdown = async () => {
+      console.log('\n[server] Shutting down...');
+      await fastify.close();
+      engine.close();
+      process.exit(0);
+    };
+
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+    return;
+  }
+
+  // --- Normal mode: load config and start connectors ---
   const config = loadConfig();
 
   // Database stored alongside the config
